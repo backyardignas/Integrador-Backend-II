@@ -14,5 +14,7 @@ public interface StudentService {
 
     Students findById(Long studentId);
 
+    Students findByDocumentNumber(String documentNumber);
+
     List<Students> findAll();
-}
+}

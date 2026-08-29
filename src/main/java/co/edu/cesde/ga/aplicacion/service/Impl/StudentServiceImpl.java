@@ -104,6 +104,17 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public Students findByDocumentNumber(String documentNumber) {
+        if (documentNumber == null || documentNumber.trim().isEmpty()) {
+            throw new ValidacionDatosException("El número de documento es obligatorio.");
+        }
+
+        return studentRepository.findByDocumentNumber(documentNumber)
+                .orElseThrow(() -> new ObjetoNoEncontradoException(
+                        "No se encontró un estudiante con el número de documento: " + documentNumber));
+    }
+
+    @Override
     public List<Students> findAll() {
         return studentRepository.findAll();
     }

@@ -36,6 +36,12 @@ public class StudentController {
         return ResponseEntity.ok(student);
     }
 
+    // GET /api/students/document/{documentNumber} -> busca un estudiante por su número de documento
+    @GetMapping("/document/{documentNumber}")
+    public ResponseEntity<Students> findByDocumentNumber(@PathVariable String documentNumber) {
+        return ResponseEntity.ok(studentService.findByDocumentNumber(documentNumber));
+    }
+
     // POST /api/students -> crea un nuevo estudiante
     @PostMapping
     public ResponseEntity<Students> save(@RequestBody Students student) {
