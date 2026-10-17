@@ -5,6 +5,7 @@ import co.edu.cesde.ga.aplicacion.domain.Users;
 import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceConflictException;
 import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
 import co.edu.cesde.ga.aplicacion.domain.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +17,11 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -29,6 +32,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByIdentification(user.getIdentification())) {
             throw new ResourceConflictException("Ya existe un usuario con la identificación: " + user.getIdentification());
         }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -69,7 +73,7 @@ public class UserServiceImpl implements UserService {
         current.setName(user.getName());
         current.setLastName(user.getLastName());
         current.setEmail(user.getEmail());
-        current.setPassword(user.getPassword());
+        current.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return Optional.of(userRepository.save(current));
     }

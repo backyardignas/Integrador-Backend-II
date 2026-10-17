@@ -159,7 +159,7 @@ Ejemplo:
    cd Integrador-Backend-II
    ```
 
-2. Crea la base de datos en MySQL (las tablas se crean solas al iniciar):
+2. La base de datos `bdcesde2025v3` y sus tablas se crean solas al iniciar. Si prefieres crearla a mano:
 
    ```sql
    CREATE DATABASE bdcesde2025v3;
