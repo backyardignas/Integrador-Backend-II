@@ -3,7 +3,7 @@ package co.edu.cesde.ga.aplicacion.domain;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "groups")
+@Table(name = "`groups`")
 public class Groups {
 
     @Id

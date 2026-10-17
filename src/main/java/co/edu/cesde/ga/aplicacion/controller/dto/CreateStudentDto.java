@@ -10,18 +10,19 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record CreateStudentDto(
-        @NotBlank String firstName,
-        @NotBlank String lastName,
+        @NotBlank @Size(max = 100) String firstName,
+        @NotBlank @Size(max = 100) String lastName,
         @NotBlank @Size(max = 50) String documentNumber,
         @NotBlank @Size(max = 50) String code,
         @NotNull @Past
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate birthDate,
-        @NotBlank String status,
+        @Size(max = 50) String status,
         Long userId
 ) {
     public Students toStudent() {
+        String estado = (status == null || status.isBlank()) ? "ACTIVO" : status.trim().toUpperCase();
         return new Students(null, null, firstName.trim(), lastName.trim(), documentNumber.trim(),
-                code.trim().toUpperCase(), birthDate, status.trim().toUpperCase());
+                code.trim().toUpperCase(), birthDate, estado);
     }
 }

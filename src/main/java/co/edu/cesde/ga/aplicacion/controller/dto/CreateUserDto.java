@@ -7,10 +7,10 @@ import jakarta.validation.constraints.Size;
 
 public record CreateUserDto(
         @NotBlank @Size(max = 50) String identification,
-        @NotBlank String name,
-        @NotBlank String lastName,
-        @NotBlank @Email String email,
-        @NotBlank @Size(min = 6) String password
+        @NotBlank @Size(max = 100) String name,
+        @NotBlank @Size(max = 100) String lastName,
+        @NotBlank @Email @Size(max = 150) String email,
+        @NotBlank @Size(min = 6, max = 72) String password
 ) {
     public Users toUser() {
         return new Users(null, identification.trim(), name.trim(), lastName.trim(), email.trim().toLowerCase(), password);

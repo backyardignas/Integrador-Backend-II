@@ -9,7 +9,7 @@ public record UpdateGroupDto(
         @NotBlank @Size(max = 50) String code,
         @NotNull Long programId,
         @NotNull Long periodId,
-        @NotBlank String shift
+        @NotBlank @Size(max = 50) String shift
 ) {
     public Groups toGroup(Long id) {
         return new Groups(id, code.trim().toUpperCase(), null, null, shift.trim().toUpperCase());

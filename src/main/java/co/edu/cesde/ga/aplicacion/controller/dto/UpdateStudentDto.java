@@ -10,14 +10,14 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record UpdateStudentDto(
-        @NotBlank String firstName,
-        @NotBlank String lastName,
+        @NotBlank @Size(max = 100) String firstName,
+        @NotBlank @Size(max = 100) String lastName,
         @NotBlank @Size(max = 50) String documentNumber,
         @NotBlank @Size(max = 50) String code,
         @NotNull @Past
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate birthDate,
-        @NotBlank String status,
+        @NotBlank @Size(max = 50) String status,
         Long userId
 ) {
     public Students toStudent(Long id) {
