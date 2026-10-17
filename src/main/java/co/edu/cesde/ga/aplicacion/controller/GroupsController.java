@@ -1,7 +1,12 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.Groups;
-import co.edu.cesde.ga.aplicacion.service.GroupsService;
+import co.edu.cesde.ga.aplicacion.application.service.GroupsService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateGroupDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.UpdateGroupDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.GroupResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.Groups;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/groups")
-@CrossOrigin(origins = "*")
 public class GroupsController {
 
     private final GroupsService groupsService;
@@ -19,41 +23,38 @@ public class GroupsController {
         this.groupsService = groupsService;
     }
 
-    // GET /api/groups -> lista todos los grupos
     @GetMapping
-    public ResponseEntity<List<Groups>> findAll() {
-        return ResponseEntity.ok(groupsService.findAll());
+    public ResponseEntity<List<GroupResponseDto>> findAll() {
+        List<GroupResponseDto> groups = groupsService.findAll()
+                .stream()
+                .map(GroupResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(groups);
     }
 
-    // GET /api/groups/{id} -> busca un grupo por su id
     @GetMapping("/{id}")
-    public ResponseEntity<Groups> findById(@PathVariable Long id) {
-        Groups group = groupsService.findById(id);
-        if (group == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(group);
+    public ResponseEntity<GroupResponseDto> findById(@PathVariable Long id) {
+        Groups group = groupsService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("un grupo", id));
+        return ResponseEntity.ok(GroupResponseDto.from(group));
     }
 
-    // POST /api/groups -> crea un nuevo grupo
     @PostMapping
-    public ResponseEntity<Groups> save(@RequestBody Groups group) {
-        Groups created = groupsService.create(group);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<GroupResponseDto> save(@Valid @RequestBody CreateGroupDto dto) {
+        Groups group = groupsService.create(dto.toGroup(), dto.programId(), dto.periodId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(GroupResponseDto.from(group));
     }
 
-    // PUT /api/groups/{id} -> actualiza un grupo existente
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Groups group) {
-        group.setGroupId(id);
-        boolean updated = groupsService.update(group);
-        return updated ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<GroupResponseDto> update(@PathVariable Long id, @Valid @RequestBody UpdateGroupDto dto) {
+        Groups updated = groupsService.update(dto.toGroup(id), dto.programId(), dto.periodId())
+                .orElseThrow(() -> new ResourceNotFoundException("un grupo", id));
+        return ResponseEntity.ok(GroupResponseDto.from(updated));
     }
 
-    // DELETE /api/groups/{id} -> elimina un grupo por su id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        boolean deleted = groupsService.delete(id);
-        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        groupsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

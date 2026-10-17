@@ -1,7 +1,12 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.Users;
-import co.edu.cesde.ga.aplicacion.service.UserService;
+import co.edu.cesde.ga.aplicacion.application.service.UserService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateUserDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.UpdateUserDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.UserResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.Users;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
 public class UsersController {
 
     private final UserService userService;
@@ -19,51 +23,45 @@ public class UsersController {
         this.userService = userService;
     }
 
-    // GET /api/users -> lista todos los usuarios
     @GetMapping
-    public ResponseEntity<List<Users>> findAll() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponseDto>> findAll() {
+        List<UserResponseDto> users = userService.findAll()
+                .stream()
+                .map(UserResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(users);
     }
 
-    // GET /api/users/{id} -> busca un usuario por su id
     @GetMapping("/{id}")
-    public ResponseEntity<Users> findById(@PathVariable Long id) {
-        Users user = userService.getUserById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserResponseDto> findById(@PathVariable Long id) {
+        Users user = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("un usuario", id));
+        return ResponseEntity.ok(UserResponseDto.from(user));
     }
 
-    // GET /api/users/email/{email} -> busca un usuario por su correo
     @GetMapping("/email/{email}")
-    public ResponseEntity<Users> findByEmail(@PathVariable String email) {
-        Users user = userService.getUserByEmail(email);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserResponseDto> findByEmail(@PathVariable String email) {
+        Users user = userService.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró un usuario con el correo: " + email));
+        return ResponseEntity.ok(UserResponseDto.from(user));
     }
 
-    // POST /api/users -> registra un nuevo usuario (registerUser es void: se devuelve el objeto recibido)
     @PostMapping
-    public ResponseEntity<Users> save(@RequestBody Users user) {
-        userService.registerUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public ResponseEntity<UserResponseDto> save(@Valid @RequestBody CreateUserDto dto) {
+        Users user = userService.create(dto.toUser());
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponseDto.from(user));
     }
 
-    // PUT /api/users/{id} -> actualiza los datos de un usuario
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Users user) {
-        user.setUserId(id);
-        userService.updateUserInfo(user);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<UserResponseDto> update(@PathVariable Long id, @Valid @RequestBody UpdateUserDto dto) {
+        Users updated = userService.update(dto.toUser(id))
+                .orElseThrow(() -> new ResourceNotFoundException("un usuario", id));
+        return ResponseEntity.ok(UserResponseDto.from(updated));
     }
 
-    // DELETE /api/users/{id} -> elimina un usuario por su id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        userService.removeUser(id);
+        userService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

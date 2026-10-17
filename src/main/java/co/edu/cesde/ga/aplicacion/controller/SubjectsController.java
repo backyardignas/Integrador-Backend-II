@@ -1,7 +1,12 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.Subjects;
-import co.edu.cesde.ga.aplicacion.service.SubjectsService;
+import co.edu.cesde.ga.aplicacion.application.service.SubjectsService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateSubjectDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.UpdateSubjectDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.SubjectResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.Subjects;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/subjects")
-@CrossOrigin(origins = "*")
 public class SubjectsController {
 
     private final SubjectsService subjectsService;
@@ -19,41 +23,38 @@ public class SubjectsController {
         this.subjectsService = subjectsService;
     }
 
-    // GET /api/subjects -> lista todas las materias
     @GetMapping
-    public ResponseEntity<List<Subjects>> findAll() {
-        return ResponseEntity.ok(subjectsService.findAll());
+    public ResponseEntity<List<SubjectResponseDto>> findAll() {
+        List<SubjectResponseDto> subjects = subjectsService.findAll()
+                .stream()
+                .map(SubjectResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(subjects);
     }
 
-    // GET /api/subjects/{id} -> busca una materia por su id
     @GetMapping("/{id}")
-    public ResponseEntity<Subjects> findById(@PathVariable Long id) {
-        Subjects subject = subjectsService.findById(id);
-        if (subject == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(subject);
+    public ResponseEntity<SubjectResponseDto> findById(@PathVariable Long id) {
+        Subjects subject = subjectsService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("una materia", id));
+        return ResponseEntity.ok(SubjectResponseDto.from(subject));
     }
 
-    // POST /api/subjects -> crea una nueva materia
     @PostMapping
-    public ResponseEntity<Subjects> save(@RequestBody Subjects subject) {
-        Subjects created = subjectsService.create(subject);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<SubjectResponseDto> save(@Valid @RequestBody CreateSubjectDto dto) {
+        Subjects subject = subjectsService.create(dto.toSubject(), dto.programId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(SubjectResponseDto.from(subject));
     }
 
-    // PUT /api/subjects/{id} -> actualiza una materia existente
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Subjects subject) {
-        subject.setSubjectId(id);
-        boolean updated = subjectsService.update(subject);
-        return updated ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<SubjectResponseDto> update(@PathVariable Long id, @Valid @RequestBody UpdateSubjectDto dto) {
+        Subjects updated = subjectsService.update(dto.toSubject(id), dto.programId())
+                .orElseThrow(() -> new ResourceNotFoundException("una materia", id));
+        return ResponseEntity.ok(SubjectResponseDto.from(updated));
     }
 
-    // DELETE /api/subjects/{id} -> elimina una materia por su id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        boolean deleted = subjectsService.delete(id);
-        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        subjectsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

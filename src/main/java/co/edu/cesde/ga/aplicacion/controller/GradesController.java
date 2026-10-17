@@ -1,7 +1,12 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.Grades;
-import co.edu.cesde.ga.aplicacion.service.GradesService;
+import co.edu.cesde.ga.aplicacion.application.service.GradesService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateGradeDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.UpdateGradeDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.GradeResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.Grades;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/grades")
-@CrossOrigin(origins = "*")
 public class GradesController {
 
     private final GradesService gradesService;
@@ -19,41 +23,47 @@ public class GradesController {
         this.gradesService = gradesService;
     }
 
-    // GET /api/grades -> lista todas las notas
     @GetMapping
-    public ResponseEntity<List<Grades>> findAll() {
-        return ResponseEntity.ok(gradesService.findAll());
+    public ResponseEntity<List<GradeResponseDto>> findAll() {
+        List<GradeResponseDto> grades = gradesService.findAll()
+                .stream()
+                .map(GradeResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(grades);
     }
 
-    // GET /api/grades/{id} -> busca una nota por su id
     @GetMapping("/{id}")
-    public ResponseEntity<Grades> findById(@PathVariable Long id) {
-        Grades grade = gradesService.findById(id);
-        if (grade == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(grade);
+    public ResponseEntity<GradeResponseDto> findById(@PathVariable Long id) {
+        Grades grade = gradesService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("una nota", id));
+        return ResponseEntity.ok(GradeResponseDto.from(grade));
     }
 
-    // POST /api/grades -> crea una nueva nota
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<List<GradeResponseDto>> findByStudent(@PathVariable Long studentId) {
+        List<GradeResponseDto> grades = gradesService.findByStudent(studentId)
+                .stream()
+                .map(GradeResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(grades);
+    }
+
     @PostMapping
-    public ResponseEntity<Grades> save(@RequestBody Grades grade) {
-        Grades created = gradesService.create(grade);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<GradeResponseDto> save(@Valid @RequestBody CreateGradeDto dto) {
+        Grades grade = gradesService.create(dto.studentId(), dto.groupSubjectId(), dto.finalScore(), dto.observation());
+        return ResponseEntity.status(HttpStatus.CREATED).body(GradeResponseDto.from(grade));
     }
 
-    // PUT /api/grades/{id} -> actualiza una nota existente
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Grades grade) {
-        grade.setGradeId(id);
-        boolean updated = gradesService.update(grade);
-        return updated ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<GradeResponseDto> update(@PathVariable Long id, @Valid @RequestBody UpdateGradeDto dto) {
+        Grades updated = gradesService.update(id, dto.finalScore(), dto.observation())
+                .orElseThrow(() -> new ResourceNotFoundException("una nota", id));
+        return ResponseEntity.ok(GradeResponseDto.from(updated));
     }
 
-    // DELETE /api/grades/{id} -> elimina una nota por su id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        boolean deleted = gradesService.delete(id);
-        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        gradesService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

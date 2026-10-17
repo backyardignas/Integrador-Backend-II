@@ -1,7 +1,11 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.UserRoles;
-import co.edu.cesde.ga.aplicacion.service.UserRolesService;
+import co.edu.cesde.ga.aplicacion.application.service.UserRolesService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateUserRoleDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.UserRoleResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.UserRoles;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/user-roles")
-@CrossOrigin(origins = "*")
 public class UserRolesController {
 
     private final UserRolesService userRolesService;
@@ -19,30 +22,40 @@ public class UserRolesController {
         this.userRolesService = userRolesService;
     }
 
-    // GET /api/user-roles -> lista todas las asignaciones usuario-rol
     @GetMapping
-    public ResponseEntity<List<UserRoles>> findAll() {
-        return ResponseEntity.ok(userRolesService.getAllAssignments());
+    public ResponseEntity<List<UserRoleResponseDto>> findAll() {
+        List<UserRoleResponseDto> assignments = userRolesService.findAll()
+                .stream()
+                .map(UserRoleResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(assignments);
     }
 
-    // GET /api/user-roles/user/{userId} -> roles asignados a un usuario
+    @GetMapping("/{id}")
+    public ResponseEntity<UserRoleResponseDto> findById(@PathVariable Long id) {
+        UserRoles userRole = userRolesService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("una asignación de rol", id));
+        return ResponseEntity.ok(UserRoleResponseDto.from(userRole));
+    }
+
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<UserRoles>> findByUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(userRolesService.getRolesByUserId(userId));
+    public ResponseEntity<List<UserRoleResponseDto>> findByUser(@PathVariable Long userId) {
+        List<UserRoleResponseDto> roles = userRolesService.findByUser(userId)
+                .stream()
+                .map(UserRoleResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(roles);
     }
 
-    // POST /api/user-roles/{userId}/{roleId} -> asigna un rol a un usuario
-    // (el servicio recibe los ids sueltos en lugar de un objeto UserRoles, así que no hay @RequestBody aquí)
-    @PostMapping("/{userId}/{roleId}")
-    public ResponseEntity<Void> assign(@PathVariable Long userId, @PathVariable Long roleId) {
-        userRolesService.assignRole(userId, roleId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    @PostMapping
+    public ResponseEntity<UserRoleResponseDto> assign(@Valid @RequestBody CreateUserRoleDto dto) {
+        UserRoles userRole = userRolesService.assignRole(dto.userId(), dto.roleId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserRoleResponseDto.from(userRole));
     }
 
-    // DELETE /api/user-roles/{userId}/{roleId} -> revoca un rol de un usuario
-    @DeleteMapping("/{userId}/{roleId}")
-    public ResponseEntity<Void> remove(@PathVariable Long userId, @PathVariable Long roleId) {
-        userRolesService.removeRoleFromUser(userId, roleId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        userRolesService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,7 +1,12 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.Roles;
-import co.edu.cesde.ga.aplicacion.service.RolesService;
+import co.edu.cesde.ga.aplicacion.application.service.RolesService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateRoleDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.UpdateRoleDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.RoleResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.Roles;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/roles")
-@CrossOrigin(origins = "*")
 public class RolesController {
 
     private final RolesService rolesService;
@@ -19,43 +23,45 @@ public class RolesController {
         this.rolesService = rolesService;
     }
 
-    // GET /api/roles -> lista todos los roles
     @GetMapping
-    public ResponseEntity<List<Roles>> findAll() {
-        return ResponseEntity.ok(rolesService.getAllRoles());
+    public ResponseEntity<List<RoleResponseDto>> findAll() {
+        List<RoleResponseDto> roles = rolesService.findAll()
+                .stream()
+                .map(RoleResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(roles);
     }
 
-    // GET /api/roles/{id} -> busca un rol por su id
     @GetMapping("/{id}")
-    public ResponseEntity<Roles> findById(@PathVariable Long id) {
-        Roles role = rolesService.getRoleById(id);
-        if (role == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(role);
+    public ResponseEntity<RoleResponseDto> findById(@PathVariable Long id) {
+        Roles role = rolesService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("un rol", id));
+        return ResponseEntity.ok(RoleResponseDto.from(role));
     }
 
-    // GET /api/roles/name/{name} -> busca un rol por su nombre
     @GetMapping("/name/{name}")
-    public ResponseEntity<Roles> findByName(@PathVariable String name) {
-        Roles role = rolesService.getRoleByName(name);
-        if (role == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(role);
+    public ResponseEntity<RoleResponseDto> findByName(@PathVariable String name) {
+        Roles role = rolesService.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró un rol con el nombre: " + name));
+        return ResponseEntity.ok(RoleResponseDto.from(role));
     }
 
-    // POST /api/roles -> crea un nuevo rol (createRole es void: se devuelve el objeto recibido)
     @PostMapping
-    public ResponseEntity<Roles> save(@RequestBody Roles role) {
-        rolesService.createRole(role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(role);
+    public ResponseEntity<RoleResponseDto> save(@Valid @RequestBody CreateRoleDto dto) {
+        Roles role = rolesService.create(dto.toRole());
+        return ResponseEntity.status(HttpStatus.CREATED).body(RoleResponseDto.from(role));
     }
 
-    // DELETE /api/roles/{id} -> elimina un rol por su id
+    @PutMapping("/{id}")
+    public ResponseEntity<RoleResponseDto> update(@PathVariable Long id, @Valid @RequestBody UpdateRoleDto dto) {
+        Roles updated = rolesService.update(dto.toRole(id))
+                .orElseThrow(() -> new ResourceNotFoundException("un rol", id));
+        return ResponseEntity.ok(RoleResponseDto.from(updated));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        rolesService.deleteRole(id);
+        rolesService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

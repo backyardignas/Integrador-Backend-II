@@ -1,7 +1,12 @@
 package co.edu.cesde.ga.aplicacion.controller;
 
-import co.edu.cesde.ga.aplicacion.models.Enrollments;
-import co.edu.cesde.ga.aplicacion.service.EnrollmentService;
+import co.edu.cesde.ga.aplicacion.application.service.EnrollmentService;
+import co.edu.cesde.ga.aplicacion.controller.dto.CreateEnrollmentDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.UpdateEnrollmentDto;
+import co.edu.cesde.ga.aplicacion.controller.dto.response.EnrollmentResponseDto;
+import co.edu.cesde.ga.aplicacion.domain.Enrollments;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.EnrollmentNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/enrollments")
-@CrossOrigin(origins = "*")
 public class EnrollmentsController {
 
     private final EnrollmentService enrollmentService;
@@ -19,39 +23,46 @@ public class EnrollmentsController {
         this.enrollmentService = enrollmentService;
     }
 
-    // GET /api/enrollments -> lista todas las matrículas
     @GetMapping
-    public ResponseEntity<List<Enrollments>> findAll() {
-        return ResponseEntity.ok(enrollmentService.getAllEnrollments());
+    public ResponseEntity<List<EnrollmentResponseDto>> findAll() {
+        List<EnrollmentResponseDto> enrollments = enrollmentService.findAll()
+                .stream()
+                .map(EnrollmentResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(enrollments);
     }
 
-    // GET /api/enrollments/{id} -> busca una matrícula por su id
     @GetMapping("/{id}")
-    public ResponseEntity<Enrollments> findById(@PathVariable Long id) {
-        Enrollments enrollment = enrollmentService.getEnrollmentById(id);
-        if (enrollment == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(enrollment);
+    public ResponseEntity<EnrollmentResponseDto> findById(@PathVariable Long id) {
+        Enrollments enrollment = enrollmentService.findById(id)
+                .orElseThrow(() -> new EnrollmentNotFoundException(id));
+        return ResponseEntity.ok(EnrollmentResponseDto.from(enrollment));
     }
 
-    // GET /api/enrollments/student/{studentId} -> matrículas de un estudiante
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<Enrollments>> findByStudent(@PathVariable Long studentId) {
-        return ResponseEntity.ok(enrollmentService.getEnrollmentsByStudent(studentId));
+    public ResponseEntity<List<EnrollmentResponseDto>> findByStudent(@PathVariable Long studentId) {
+        List<EnrollmentResponseDto> enrollments = enrollmentService.findByStudent(studentId)
+                .stream()
+                .map(EnrollmentResponseDto::from)
+                .toList();
+        return ResponseEntity.ok(enrollments);
     }
 
-    // POST /api/enrollments -> crea una matrícula (enrollStudent es void: se devuelve el objeto recibido)
     @PostMapping
-    public ResponseEntity<Enrollments> save(@RequestBody Enrollments enrollment) {
-        enrollmentService.enrollStudent(enrollment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(enrollment);
+    public ResponseEntity<EnrollmentResponseDto> save(@Valid @RequestBody CreateEnrollmentDto dto) {
+        Enrollments enrollment = enrollmentService.create(dto.studentId(), dto.subjectId(), dto.periodId(), dto.enrollmentDate());
+        return ResponseEntity.status(HttpStatus.CREATED).body(EnrollmentResponseDto.from(enrollment));
     }
 
-    // DELETE /api/enrollments/{id} -> cancela una matrícula por su id
+    @PutMapping("/{id}")
+    public ResponseEntity<EnrollmentResponseDto> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateEnrollmentDto dto) {
+        Enrollments enrollment = enrollmentService.updateStatus(id, dto.toStatus());
+        return ResponseEntity.ok(EnrollmentResponseDto.from(enrollment));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        enrollmentService.cancelEnrollment(id);
+        enrollmentService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
