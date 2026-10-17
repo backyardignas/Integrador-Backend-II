@@ -84,6 +84,18 @@ Crear estudiante (`userId` es opcional):
 }
 ```
 
+Crear docente (`userId` es opcional):
+
+```json
+{
+  "firstName": "Carlos",
+  "lastName": "Goenaga",
+  "documentNumber": "1001234567",
+  "code": "T001",
+  "status": "ACTIVO"
+}
+```
+
 Matricular (la fecha es opcional, si no se envía queda la de hoy):
 
 ```json
