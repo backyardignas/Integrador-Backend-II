@@ -1,49 +1,72 @@
-# Proyecto Integrador Backend II - CESDE
+# 🎓 API de gestión académica — Proyecto integrador Backend II
 
-API REST para la gestión académica: usuarios, roles, estudiantes, profesores, programas, periodos, materias, grupos, matrículas y notas.
+API REST para administrar la información académica de una institución educativa: usuarios y roles, estudiantes, docentes, programas, materias, grupos, periodos, matrículas y notas.
 
-**Stack:** Java 17, Spring Boot 3, Spring Data JPA, MySQL (XAMPP), Swagger.
+> Proyecto integrador realizado en equipo de 3 personas en **CESDE**, en el módulo Backend II del programa de Desarrollo de Software.
 
-## Cómo ejecutarlo
+![Java](https://img.shields.io/badge/Java-17-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-6DB33F?logo=springboot&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
 
-1. Iniciar MySQL desde XAMPP y crear la base de datos `bdcesde2025v3`.
-2. Revisar usuario y contraseña en `src/main/resources/application.properties`.
-3. Ejecutar `AplicacionApplication` desde IntelliJ.
+---
 
-La API queda en `http://localhost:8888` y la documentación en `http://localhost:8888/swagger-ui/index.html`.
+## ✨ Qué hace
 
-## Estructura
+- **13 entidades** relacionadas que modelan la vida académica: usuarios, roles, estudiantes, docentes, programas, materias, grupos, periodos, matrículas y calificaciones.
+- **65 endpoints REST** organizados en 12 controladores.
+- Búsquedas útiles además del CRUD: estudiante por número de documento, usuario por correo, rol por nombre, matrículas y notas de un estudiante y materias de un grupo.
+- **DTOs** de entrada y salida con validaciones, así la API no expone las entidades ni datos como la contraseña.
+- **Manejo global de errores** con excepciones propias y respuestas con el código y el mensaje del error.
+- Documentación con **Swagger**.
+
+## 🧰 Tecnologías
+
+| Área | Herramientas |
+|---|---|
+| Lenguaje | Java 17 |
+| Framework | Spring Boot 3.2 (Spring Web, Spring Data JPA, Validation) |
+| Base de datos | MySQL |
+| Documentación | Swagger (springdoc-openapi) |
+| Construcción | Maven |
+
+## 🏗️ Estructura
 
 ```
-application/service        interfaces de los servicios
-application/service/Impl   implementación y reglas de negocio
-controller                 controladores REST
-controller/dto             DTO de entrada (Create / Update)
-controller/dto/response    DTO de salida y ErrorResponse
-domain                     entidades JPA y EnrollmentStatus
-domain/exceptions          excepciones del negocio
-domain/repository          repositorios JPA
-presentation/advice        manejo global de errores
+src/main/java/co/edu/cesde/ga/aplicacion
+├── application
+│   └── service           → Interfaces de los servicios
+│       └── Impl          → Lógica y reglas de negocio
+├── controller            → Controladores REST
+│   └── dto               → DTOs de entrada (Create / Update)
+│       └── response      → DTOs de salida y ErrorResponse
+├── domain                → Entidades JPA y EnrollmentStatus
+│   ├── exceptions        → Excepciones del negocio
+│   └── repository        → Repositorios JPA
+├── presentation
+│   └── advice            → Manejador global de errores
+└── CorsConfig            → Configuración de CORS
 ```
 
-## Endpoints
+## 📡 Endpoints
 
-Todos los recursos tienen `GET` (listar), `GET /{id}`, `POST`, `PUT /{id}` y `DELETE /{id}`, excepto donde se indica.
+URL base: `http://localhost:8888`
 
-| Recurso | Ruta | Extra |
-|---------|------|-------|
-| Usuarios | `/api/users` | `GET /email/{email}` |
-| Roles | `/api/roles` | `GET /name/{name}` |
-| Roles de usuario | `/api/user-roles` | `GET /user/{userId}`, sin `PUT` |
-| Estudiantes | `/api/students` | |
-| Profesores | `/api/teachers` | |
-| Programas | `/api/programs` | |
-| Periodos | `/api/periods` | |
-| Materias | `/api/subjects` | |
-| Grupos | `/api/groups` | |
-| Materias por grupo | `/api/group-subjects` | `GET /group/{groupId}`, sin `PUT` |
-| Notas | `/api/grades` | `GET /student/{studentId}` |
-| Matrículas | `/api/enrollments` | `GET /student/{studentId}`, el `PUT` cambia el estado |
+Swagger: `http://localhost:8888/swagger-ui/index.html`
+
+| Recurso | Ruta base | Operaciones |
+|---|---|---|
+| Usuarios | `/api/users` | Listar, obtener por id, buscar por correo (`/email/{email}`), crear, actualizar, eliminar |
+| Roles | `/api/roles` | Listar, obtener por id, buscar por nombre (`/name/{name}`), crear, actualizar, eliminar |
+| Roles de usuario | `/api/user-roles` | Listar, obtener por id, roles de un usuario (`/user/{userId}`), asignar, eliminar |
+| Estudiantes | `/api/students` | Listar, obtener por id, buscar por documento (`/document/{documentNumber}`), crear, actualizar, eliminar |
+| Docentes | `/api/teachers` | Listar, obtener por id, crear, actualizar, eliminar |
+| Programas | `/api/programs` | Listar, obtener por id, crear, actualizar, eliminar |
+| Materias | `/api/subjects` | Listar, obtener por id, crear, actualizar, eliminar |
+| Grupos | `/api/groups` | Listar, obtener por id, crear, actualizar, eliminar |
+| Materias por grupo | `/api/group-subjects` | Listar, obtener por id, materias de un grupo (`/group/{groupId}`), asignar, eliminar |
+| Periodos | `/api/periods` | Listar, obtener por id, crear, actualizar, eliminar |
+| Matrículas | `/api/enrollments` | Listar, obtener por id, matrículas de un estudiante (`/student/{studentId}`), crear, cambiar estado, eliminar |
+| Calificaciones | `/api/grades` | Listar, obtener por id, notas de un estudiante (`/student/{studentId}`), crear, actualizar, eliminar |
 
 ### Ejemplos
 
@@ -91,21 +114,75 @@ Registrar nota:
 }
 ```
 
-## Reglas de negocio
+## 📏 Reglas de negocio
 
-- No se repiten: documento y código de estudiantes y profesores, correo e identificación de usuarios, nombre de rol, código de programa, materia y grupo.
+- No se repiten: documento y código de estudiantes y docentes, correo e identificación de usuarios, nombre de rol y código de programa, materia y grupo.
 - Un usuario no puede tener el mismo rol dos veces y una materia no se asigna dos veces al mismo grupo.
 - Un estudiante no puede tener dos matrículas vigentes en la misma materia y periodo (las canceladas no cuentan).
 - Una matrícula finalizada no se puede modificar y una cancelada no se puede finalizar.
 - La nota va de 0.0 a 5.0 y solo hay una nota por estudiante en cada materia del grupo.
 - La fecha de fin del periodo debe ser posterior a la de inicio.
 
-## Respuestas de error
+## ⚠️ Respuestas de error
 
 | Código | Cuándo |
-|--------|--------|
+|---|---|
 | 400 | Datos inválidos, JSON mal formado o regla de negocio incumplida |
 | 404 | El recurso no existe |
 | 409 | Dato repetido o registro con datos relacionados |
 
-Las evidencias de las pruebas están en la carpeta `evidencias`.
+Ejemplo:
+
+```json
+{
+  "status": 404,
+  "error": "Not Found",
+  "message": "No se encontró un estudiante con el ID: 99",
+  "timestamp": "2026-10-17T12:14:43.573"
+}
+```
+
+## 🚀 Cómo ejecutarlo
+
+### Requisitos
+
+- Java 17 o superior
+- Maven, o un IDE como IntelliJ IDEA que lo incluya
+- MySQL corriendo en `localhost:3306` (por ejemplo, con XAMPP)
+
+### Pasos
+
+1. Clona el repositorio:
+
+   ```bash
+   git clone https://github.com/backyardignas/Integrador-Backend-II.git
+   cd Integrador-Backend-II
+   ```
+
+2. Crea la base de datos en MySQL (las tablas se crean solas al iniciar):
+
+   ```sql
+   CREATE DATABASE bdcesde2025v3;
+   ```
+
+3. Revisa el usuario y la contraseña de MySQL en `src/main/resources/application.properties`.
+
+4. Inicia la aplicación:
+
+   ```bash
+   mvn spring-boot:run
+   ```
+
+   O ejecuta la clase `AplicacionApplication` desde tu IDE. La API queda disponible en `http://localhost:8888`.
+
+## 📸 Evidencias
+
+En la carpeta [`evidencias`](evidencias) están las capturas de las pruebas hechas desde Swagger: creación de cada recurso, validaciones, datos repetidos, cambios de estado de la matrícula y errores 400, 404 y 409.
+
+## 👥 Autores
+
+Proyecto integrador realizado en equipo en CESDE.
+
+- **Santiago Arango Quintero** — [Portafolio](https://backyardignas.github.io) · [LinkedIn](https://www.linkedin.com/in/santi-arango-bb6820267/) · [GitHub](https://github.com/backyardignas)
+- **Alex Monroy** — [GitHub](https://github.com/AlexMonroy69)
+- **José Vásquez**

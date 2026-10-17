@@ -5,6 +5,7 @@ import co.edu.cesde.ga.aplicacion.controller.dto.CreateStudentDto;
 import co.edu.cesde.ga.aplicacion.controller.dto.UpdateStudentDto;
 import co.edu.cesde.ga.aplicacion.controller.dto.response.StudentResponseDto;
 import co.edu.cesde.ga.aplicacion.domain.Students;
+import co.edu.cesde.ga.aplicacion.domain.exceptions.ResourceNotFoundException;
 import co.edu.cesde.ga.aplicacion.domain.exceptions.StudentNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,14 @@ public class StudentController {
     public ResponseEntity<StudentResponseDto> findById(@PathVariable Long id) {
         Students student = studentService.findById(id)
                 .orElseThrow(() -> new StudentNotFoundException(id));
+        return ResponseEntity.ok(StudentResponseDto.from(student));
+    }
+
+    @GetMapping("/document/{documentNumber}")
+    public ResponseEntity<StudentResponseDto> findByDocumentNumber(@PathVariable String documentNumber) {
+        Students student = studentService.findByDocumentNumber(documentNumber)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró un estudiante con el número de documento: " + documentNumber));
         return ResponseEntity.ok(StudentResponseDto.from(student));
     }
 

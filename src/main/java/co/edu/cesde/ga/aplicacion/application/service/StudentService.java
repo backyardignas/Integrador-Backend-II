@@ -10,6 +10,7 @@ public interface StudentService {
     Students create(Students student, Long userId);
     List<Students> findAll();
     Optional<Students> findById(Long id);
+    Optional<Students> findByDocumentNumber(String documentNumber);
     Optional<Students> update(Students student, Long userId);
     void deleteById(Long id);
     boolean existsById(Long id);

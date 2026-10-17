@@ -52,6 +52,12 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<Students> findByDocumentNumber(String documentNumber) {
+        return studentRepository.findByDocumentNumber(documentNumber.trim());
+    }
+
+    @Override
     public Optional<Students> update(Students student, Long userId) {
         Optional<Students> existing = studentRepository.findById(student.getStudentId());
         if (existing.isEmpty()) {
