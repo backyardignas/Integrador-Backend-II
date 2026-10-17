@@ -69,4 +69,4 @@ public class Groups {
     public void setShift(String shift) {
         this.shift = shift;
     }
-}
+};
